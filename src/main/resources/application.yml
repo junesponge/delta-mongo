@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: delta-mongo
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: test
+
+server:
+  servlet:
+    context-path: /api
