@@ -89,37 +89,12 @@ public class DataMap<K, V> extends HashMap<K, V> {
         }
     }
 
-    public DataMap increase(Map increaseMap) {
-        if (null == increaseMap) {
-            return this;
-        }
-
-        increaseMap.forEach((k, v) -> {
-            Object cv = this.get(k);
-            if (null != cv && cv instanceof Map && v instanceof Map) {
-                this.increase((Map) cv, (Map) v);
-            } else {
-                this.put((K) k, (V) v);
-            }
-        });
-
-        return this;
+    public void merge(Map decreaseData, Map increaseData) {
+        this.decrease(this, decreaseData);
+        this.increase(this, increaseData);
     }
 
-    private Map increase(Map currentMap, Map increaseMap) {
-        increaseMap.forEach((k, v) -> {
-            Object cv = currentMap.get(k);
-            if (null != cv && cv instanceof Map && v instanceof Map) {
-                this.increase((Map) cv, (Map) v);
-            } else {
-                currentMap.put(k, v);
-            }
-        });
-
-        return currentMap;
-    }
-
-    public DataMap decrease(Map decreaseMap) {
+    /*public DataMap decrease(Map decreaseMap) {
         if (null == decreaseMap) {
             return this;
         }
@@ -137,7 +112,7 @@ public class DataMap<K, V> extends HashMap<K, V> {
         });
 
         return this;
-    }
+    }*/
 
     private Map decrease(Map currentMap, Map decreaseMap) {
         decreaseMap.forEach((k, v) -> {
@@ -149,6 +124,36 @@ public class DataMap<K, V> extends HashMap<K, V> {
                 }
             } else {
                 currentMap.remove(k);
+            }
+        });
+
+        return currentMap;
+    }
+
+    /*public DataMap increase(Map increaseMap) {
+        if (null == increaseMap) {
+            return this;
+        }
+
+        increaseMap.forEach((k, v) -> {
+            Object cv = this.get(k);
+            if (null != cv && cv instanceof Map && v instanceof Map) {
+                this.increase((Map) cv, (Map) v);
+            } else {
+                this.put((K) k, (V) v);
+            }
+        });
+
+        return this;
+    }*/
+
+    private Map increase(Map currentMap, Map increaseMap) {
+        increaseMap.forEach((k, v) -> {
+            Object cv = currentMap.get(k);
+            if (null != cv && cv instanceof Map && v instanceof Map) {
+                this.increase((Map) cv, (Map) v);
+            } else {
+                currentMap.put(k, v);
             }
         });
 

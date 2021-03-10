@@ -1,6 +1,8 @@
 package com.delta.controller;
 
-import org.springframework.stereotype.Component;
+import com.delta.annotation.Collection;
+import com.delta.repository.DeltaMongoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,8 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DeltaController {
 
+    @Autowired
+    @Collection("test")
+    DeltaMongoRepository deltaMongoRepository;
+
     @GetMapping("/test")
     public String test() {
-        return "hello world";
+        DeltaMongoRepository repo = this.deltaMongoRepository;
+        return repo.findAll().toJSONString();
     }
 }
