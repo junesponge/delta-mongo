@@ -1,6 +1,10 @@
 spring:
   application:
     name: delta-mongo
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
   data:
     mongodb:
       host: localhost

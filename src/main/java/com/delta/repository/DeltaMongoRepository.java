@@ -4,11 +4,14 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.delta.exception.NotSupportException;
+import com.delta.util.CriteriaUtil;
 import com.delta.util.DataMap;
-import com.mongodb.BasicDBObject;
+import com.delta.util.DateTimeUtil;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -18,12 +21,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import static com.delta.util.Constants.*;
 
 /**
  * @Desription:
@@ -36,8 +38,9 @@ public class DeltaMongoRepository {
     public static void main(String[] args) {
         String connection = "mongodb://localhost:27017/test";
         MongoDatabaseFactory mongoDbFactory = new SimpleMongoClientDatabaseFactory(connection);
-        DeltaMongoRepository repo = new DeltaMongoRepository();
-//        DeltaMongoRepository repo = new DeltaMongoRepository(new MongoTemplate(mongoDbFactory), "test");
+//        DeltaMongoRepository repo = new DeltaMongoRepository();
+        DeltaMongoRepository repo = new DeltaMongoRepository(new MongoTemplate(mongoDbFactory), "test");
+        repo.criteriaUtil = new CriteriaUtil();
 
         JSONObject json = new JSONObject();
         json.put("_id", "6044e99225751213a8d83ff3");
@@ -64,48 +67,59 @@ public class DeltaMongoRepository {
 
 //        repo.insert(json);
 //        System.out.println(repo.findById("6044e99225751213a8d83ff3"));
-          System.out.println(repo.findAll());
+//          System.out.println(repo.findAll());
+        Document queryDocument = new Document();
+        queryDocument.put("a1.a2.a3", "a3-change");
+        queryDocument.put("b1.b2", "b2");
+        Document fieldsDocument = new Document();
+        /*fieldsDocument.put("c1.c2", true);
+        fieldsDocument.put("b1", true);*/
+        fieldsDocument.put("a1", true);
+        fieldsDocument.put("b1", true);
+       /* BasicQuery query = new BasicQuery(queryDocument, fieldsDocument);
+        Document sortDocument = new Document();
+        sortDocument.put("b1.b2", -1);
+        query.setSortObject(sortDocument);*/
+        Query query = new Query();
+        query.addCriteria(Criteria.where(ID).is(new ObjectId("6045c5721dd50c3b86954439")));
+        query.addCriteria(Criteria.where("a1.a2.a3").is("a3-change"));
+        query.addCriteria(Criteria.where("b1.b2").is("b3"));
+        query.addCriteria(Criteria.where("b1.b22").gt(5));
+//        query.fields().include("a1");
+//        query.fields().elemMatch("c1", Criteria.where("c1k").is("c1v"));
+        query.with(Sort.by(Sort.Order.asc("a1.a2.a3")));
+
+        System.out.println(repo.findByQuery(query));
 //        repo.update(json);
 //        Date date = repo.parseStringDate("2021-03-07T22:56:18Z");
 //        Date date1 = new Date(date.getTime() + 1);
 //        System.out.println(repo.findByIdAndDate("6044e99225751213a8d83ff3", date1));
     }
 
-    private static final String ID = "_id";
-    private static final String CURRENT_VALUE = "currentValue";
-    private static final String EXIST_DATA = "existData";
-    private static final String NON_EXIST_DATA = "nonExistData";
-    private static final String EDITED_TIME = "editedTime";
-
     public DeltaMongoRepository() {}
 
-    /*public DeltaMongoRepository(MongoTemplate mongoTemplate, String collection) {
+    public DeltaMongoRepository(MongoTemplate mongoTemplate, String collection) {
         this.mongoTemplate = mongoTemplate;
         this.collection = collection;
-    }*/
+    }
 
-    private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    @Autowired
+    private CriteriaUtil criteriaUtil;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     private String collection;
 
-    private String formatDateString(Date date) {
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-        return localDateTime.format(dateTimeFormatter);
-    }
-
-    private Date parseStringDate(String date) {
-        LocalDateTime localDateTime = LocalDateTime.parse(date, dateTimeFormatter);
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-    }
-
     public JSONObject insert(JSONObject data) {
         JSONObject json = new JSONObject();
-        data.put(EDITED_TIME, this.formatDateString(new Date()));
+        data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
         json.put(CURRENT_VALUE, data);
         return this.mongoTemplate.insert(json, this.collection);
+    }
+
+    public JSONArray findAll() {
+        return this.findByQuery(null);
     }
 
     public JSONObject findById(String id) {
@@ -114,15 +128,61 @@ public class DeltaMongoRepository {
 
     public JSONObject findByIdAndDate(String id, Date date) {
         JSONObject rawData = this.findRawDataById(id);
+        return this.findByDate(rawData, date);
+    }
+
+    private JSONObject findRawDataById(String id) {
+        ObjectId objectId = new ObjectId(id);
+        Map rawData = this.mongoTemplate.findById(objectId, Map.class, this.collection);
+        return new JSONObject(rawData);
+    }
+
+    public JSONArray findByQuery(Query query) {
+        JSONArray rawDataByQuery = this.findRawDataByQuery(query);
+        return new JSONArray(rawDataByQuery.stream().map(o -> {
+            Map m = (Map) o;
+            Map tmpMap = new LinkedHashMap((Map) m.get(CURRENT_VALUE));
+            m.remove(CURRENT_VALUE);
+            m.putAll(tmpMap);
+            m.put(ID, m.get(ID).toString());
+            return m;
+        }).collect(Collectors.toList()));
+    }
+
+    public JSONArray findByQueryAndDate(Query query, Date date) {
+        JSONArray rawData = this.findRawDataByQuery(query);
+        return new JSONArray(rawData.stream().map(o -> this.findByDate((JSONObject) o, date)).collect(Collectors.toList()));
+    }
+
+    private JSONArray findRawDataByQuery(Query query) {
+        try {
+            if (null == query) {
+                Document fieldsObject = new Document();
+                fieldsObject.put(ID, true);
+                fieldsObject.put(CURRENT_VALUE, true);
+                query = new BasicQuery(new Document(), fieldsObject);
+            } else {
+                query = this.criteriaUtil.deltaWithQuery(query);
+                query = this.criteriaUtil.deltaWithProjection(query);
+                query = this.criteriaUtil.deltaWithSort(query);
+            }
+        } catch (NotSupportException e) {
+            e.printStackTrace();
+        }
+        return new JSONArray().fluentAddAll(this.mongoTemplate.find(query, Map.class, this.collection));
+    }
+
+    private JSONObject findByDate(JSONObject rawData, Date date) {
+        String id = new String(rawData.getString(ID));
         rawData.remove(ID);
         rawData = this.sortByDateKey(rawData);
 
         // The data has not been created
         Entry<String, Object> entry = (Entry<String, Object>) rawData.entrySet().toArray()[rawData.size() - 1];
         boolean hasNotCreated = ((rawData.size() > 1
-                && date.getTime() < this.parseStringDate(entry.getKey()).getTime())
+                && date.getTime() < DateTimeUtil.parseStringDate(entry.getKey()).getTime())
                 || (rawData.size() == 1
-                && date.getTime() < this.parseStringDate(String.valueOf(((Map) entry.getValue()).get(EDITED_TIME))).getTime()));
+                && date.getTime() < DateTimeUtil.parseStringDate(String.valueOf(((Map) entry.getValue()).get(EDITED_TIME))).getTime()));
         if (hasNotCreated) {
             return new JSONObject();
         }
@@ -134,18 +194,14 @@ public class DeltaMongoRepository {
             DataMap<String, Map> v = new DataMap((Map) e.getValue());
             if (CURRENT_VALUE.equals(k)) {
                 targetValue = v;
-                if (date.getTime() >= this.parseStringDate(v.getString(EDITED_TIME)).getTime()) {
+                if (date.getTime() >= DateTimeUtil.parseStringDate(v.getString(EDITED_TIME)).getTime()) {
                     break;
                 }
             } else {
-                if (date.getTime() < this.parseStringDate(k).getTime()) {
+                if (date.getTime() < DateTimeUtil.parseStringDate(k).getTime()) {
                     targetValue.merge(v.get(NON_EXIST_DATA), v.get(EXIST_DATA));
-//                    targetValue.decrease(v.get(NON_EXIST_DATA));
-//                    targetValue.increase(v.get(EXIST_DATA));
-                } else if (date.getTime() >= this.parseStringDate(k).getTime()) {
+                } else if (date.getTime() >= DateTimeUtil.parseStringDate(k).getTime()) {
                     targetValue.merge(v.get(NON_EXIST_DATA), v.get(EXIST_DATA));
-//                    targetValue.decrease(v.get(NON_EXIST_DATA));
-//                    targetValue.increase(v.get(EXIST_DATA));
                     targetValue.put(EDITED_TIME, k);
                     break;
                 }
@@ -155,37 +211,13 @@ public class DeltaMongoRepository {
         return targetValue.toJSON();
     }
 
-    public JSONArray findAll() {
-        BasicDBObject projection = new BasicDBObject();
-        projection.put(ID, true);
-        projection.put(CURRENT_VALUE, true);
-        Query query = new BasicQuery(null, projection.toJson());
-        return new JSONArray().fluentAddAll(this.mongoTemplate.find(query, Map.class, this.collection).stream().map(m -> {
-            m.putAll((Map) m.get(CURRENT_VALUE));
-            m.remove(CURRENT_VALUE);
-            m.put(ID, m.get(ID).toString());
-            return m;
-        }).collect(Collectors.toList()));
-    }
-
-    public JSONArray findByQuery(Query query) {
-
-        return null;
-    }
-
-    private JSONObject findRawDataById(String id) {
-        ObjectId objectId = new ObjectId(id);
-        Map rawData = this.mongoTemplate.findById(objectId, Map.class, this.collection);
-        return new JSONObject(rawData);
-    }
-
     public void update(JSONObject data) {
         ObjectId objectId = new ObjectId(data.getString(ID));
         JSONObject rawData = this.findRawDataById(objectId.toString());
         data.remove(ID);
         rawData.remove(ID);
 
-        data.put(EDITED_TIME, this.formatDateString(new Date()));
+        data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
 
         DataMap currentValue = DataMap.parse(rawData.getJSONObject(CURRENT_VALUE));
 
