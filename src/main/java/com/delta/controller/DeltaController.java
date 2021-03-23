@@ -57,7 +57,7 @@ public class DeltaController {
         } else {
             result = this.deltaMongoRepository.findById(id);
         }
-        return result.toJSONString();
+        return result == null ? null : result.toJSONString();
     }
 
     @GetMapping("/findByQuery")

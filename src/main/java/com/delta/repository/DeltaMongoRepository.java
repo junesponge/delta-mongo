@@ -3,6 +3,8 @@ package com.delta.repository;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializeConfig;
+import com.alibaba.fastjson.serializer.SerializeWriter;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.delta.exception.NotSupportException;
 import com.delta.util.CriteriaUtil;
@@ -116,7 +118,8 @@ public class DeltaMongoRepository {
         JSONObject json = new JSONObject();
         data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
         json.put(CURRENT, data);
-        return this.mongoTemplate.insert(json, this.collection);
+        JSONObject inserted = this.mongoTemplate.insert(json, this.collection);
+        return this.extractCurrent(this.SerializeObjectId(inserted));
     }
 
     public JSONArray findAll() {
@@ -140,13 +143,7 @@ public class DeltaMongoRepository {
 
     public JSONArray findByQuery(Query query) {
         JSONArray rawDataByQuery = this.findRawDataByQuery(query);
-        return new JSONArray(rawDataByQuery.stream().map(o -> {
-            Map m = (Map) o;
-            Map newMap = new LinkedHashMap();
-            newMap.put(ID, m.get(ID).toString());
-            newMap.putAll((Map) m.get(CURRENT));
-            return newMap;
-        }).collect(Collectors.toList()));
+        return new JSONArray(rawDataByQuery.stream().map(o -> this.extractCurrent(new JSONObject((Map) o))).collect(Collectors.toList()));
     }
 
     public JSONArray findByQueryAndDate(Query query, Date date) {
@@ -245,5 +242,25 @@ public class DeltaMongoRepository {
         List<Entry<String, Object>> list = new ArrayList<>(data.entrySet());
         Collections.sort(list, (o1, o2) -> o2.getKey().compareTo(o1.getKey()));
         return new JSONObject(list.stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue, (key1,key2) -> key2, LinkedHashMap::new)));
+    }
+
+    private JSONObject SerializeObjectId(JSONObject data) {
+        SerializeConfig config = new SerializeConfig();
+        config.put(ObjectId.class, (jsonSerializer, o, o1, type, i) -> {
+            SerializeWriter out = jsonSerializer.getWriter();
+            if (o == null) {
+                jsonSerializer.getWriter().writeNull();
+                return;
+            }
+            out.write("\"" + ((ObjectId) o).toString() + "\"");
+        });
+        return JSONObject.parseObject(JSON.toJSONString(data, config));
+    }
+
+    private JSONObject extractCurrent(JSONObject data) {
+        Map map = new LinkedHashMap();
+        map.put(ID, data.get(ID).toString());
+        map.putAll((Map) data.get(CURRENT));
+        return new JSONObject(map);
     }
 }

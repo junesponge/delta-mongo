@@ -25,7 +25,11 @@ $(function() {
         var date = $("#datetimepicker").val();
         var url = "http://localhost:8080/api/findById?id=" + $("#id").val().trim() + (date == "" ? "" : "&date=" + date);
         $.get(url, function (data, status) {
-            $('#parsedJSON').jsonViewer(JSON.parse(data), {collapsed: false, withQuotes: false});
+            if (data != "") {
+                $('#parsedJSON').jsonViewer(JSON.parse(data), {collapsed: false, withQuotes: false});
+            } else {
+                $('#parsedJSON').empty();
+            }
         });
     });
 
