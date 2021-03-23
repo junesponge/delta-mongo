@@ -119,7 +119,7 @@ public class DeltaMongoRepository {
         data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
         json.put(CURRENT, data);
         JSONObject inserted = this.mongoTemplate.insert(json, this.collection);
-        return this.extractCurrent(this.SerializeObjectId(inserted));
+        return this.getCurrent(inserted);
     }
 
     public JSONArray findAll() {
@@ -127,7 +127,7 @@ public class DeltaMongoRepository {
     }
 
     public JSONObject findById(String id) {
-        return this.findRawDataById(id).getJSONObject(CURRENT).fluentPut(ID, id);
+        return this.getCurrent(this.findRawDataById(id));
     }
 
     public JSONObject findByIdAndDate(String id, Date date) {
@@ -143,7 +143,7 @@ public class DeltaMongoRepository {
 
     public JSONArray findByQuery(Query query) {
         JSONArray rawDataByQuery = this.findRawDataByQuery(query);
-        return new JSONArray(rawDataByQuery.stream().map(o -> this.extractCurrent(new JSONObject((Map) o))).collect(Collectors.toList()));
+        return new JSONArray(rawDataByQuery.stream().map(o -> this.getCurrent(new JSONObject((Map) o))).collect(Collectors.toList()));
     }
 
     public JSONArray findByQueryAndDate(Query query, Date date) {
@@ -257,10 +257,7 @@ public class DeltaMongoRepository {
         return JSONObject.parseObject(JSON.toJSONString(data, config));
     }
 
-    private JSONObject extractCurrent(JSONObject data) {
-        Map map = new LinkedHashMap();
-        map.put(ID, data.get(ID).toString());
-        map.putAll((Map) data.get(CURRENT));
-        return new JSONObject(map);
+    private JSONObject getCurrent(JSONObject data) {
+        return data.getJSONObject(CURRENT).fluentPut(ID, data.get(ID).toString());
     }
 }
