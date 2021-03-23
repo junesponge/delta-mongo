@@ -8,10 +8,10 @@ package com.delta.util;
 public class Constants {
 
     public static final String ID = "_id";
-    public static final String CURRENT_VALUE = "currentValue";
+    public static final String CURRENT = "current";
 
-    public static final String EXIST_DATA = "existData";
-    public static final String NON_EXIST_DATA = "nonExistData";
+    public static final String PRESENT = "present";
+    public static final String ABSENT = "absent";
     public static final String EDITED_TIME = "editedTime";
 
 }

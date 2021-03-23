@@ -115,7 +115,7 @@ public class DeltaMongoRepository {
     public JSONObject insert(JSONObject data) {
         JSONObject json = new JSONObject();
         data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
-        json.put(CURRENT_VALUE, data);
+        json.put(CURRENT, data);
         return this.mongoTemplate.insert(json, this.collection);
     }
 
@@ -124,7 +124,7 @@ public class DeltaMongoRepository {
     }
 
     public JSONObject findById(String id) {
-        return this.findRawDataById(id).getJSONObject(CURRENT_VALUE).fluentPut(ID, id);
+        return this.findRawDataById(id).getJSONObject(CURRENT).fluentPut(ID, id);
     }
 
     public JSONObject findByIdAndDate(String id, Date date) {
@@ -144,7 +144,7 @@ public class DeltaMongoRepository {
             Map m = (Map) o;
             Map newMap = new LinkedHashMap();
             newMap.put(ID, m.get(ID).toString());
-            newMap.putAll((Map) m.get(CURRENT_VALUE));
+            newMap.putAll((Map) m.get(CURRENT));
             return newMap;
         }).collect(Collectors.toList()));
     }
@@ -161,7 +161,7 @@ public class DeltaMongoRepository {
             if (null == query) {
                 Document fieldsObject = new Document();
                 fieldsObject.put(ID, true);
-                fieldsObject.put(CURRENT_VALUE, true);
+                fieldsObject.put(CURRENT, true);
                 query = new BasicQuery(new Document(), fieldsObject);
             } else {
                 query = this.criteriaUtil.deltaWithQuery(query);
@@ -194,16 +194,16 @@ public class DeltaMongoRepository {
             Entry<String, Object> e = it.next();
             String k = e.getKey();
             DataMap<String, Map> v = new DataMap((Map) e.getValue());
-            if (CURRENT_VALUE.equals(k)) {
+            if (CURRENT.equals(k)) {
                 targetValue = v;
                 if (date.getTime() >= DateTimeUtil.parseStringDate(v.getString(EDITED_TIME)).getTime()) {
                     break;
                 }
             } else {
                 if (date.getTime() < DateTimeUtil.parseStringDate(k).getTime()) {
-                    targetValue.merge(v.get(NON_EXIST_DATA), v.get(EXIST_DATA));
+                    targetValue.merge(v.get(ABSENT), v.get(PRESENT));
                 } else if (date.getTime() >= DateTimeUtil.parseStringDate(k).getTime()) {
-                    targetValue.merge(v.get(NON_EXIST_DATA), v.get(EXIST_DATA));
+                    targetValue.merge(v.get(ABSENT), v.get(PRESENT));
                     targetValue.put(EDITED_TIME, k);
                     break;
                 }
@@ -221,15 +221,15 @@ public class DeltaMongoRepository {
 
         data.put(EDITED_TIME, DateTimeUtil.formatDateString(new Date()));
 
-        DataMap currentValue = DataMap.parse(rawData.getJSONObject(CURRENT_VALUE));
+        DataMap currentValue = DataMap.parse(rawData.getJSONObject(CURRENT));
 
         List<Map> updates = currentValue.compare(data);
 
         rawData.put(currentValue.getString(EDITED_TIME), new LinkedHashMap<String, Object>(){{
-            put(EXIST_DATA, updates.get(0));
-            put(NON_EXIST_DATA, updates.get(1));
+            put(PRESENT, updates.get(0));
+            put(ABSENT, updates.get(1));
         }});
-        rawData.put(CURRENT_VALUE, data);
+        rawData.put(CURRENT, data);
 
         Update update = new Update();
         Document document = Document.parse(JSON.toJSONString(rawData, SerializerFeature.DisableCircularReferenceDetect, SerializerFeature.WriteMapNullValue));

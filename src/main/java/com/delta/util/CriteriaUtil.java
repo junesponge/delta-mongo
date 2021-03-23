@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.delta.util.Constants.CURRENT_VALUE;
+import static com.delta.util.Constants.CURRENT;
 import static com.delta.util.Constants.ID;
 
 /**
@@ -35,8 +35,8 @@ public class CriteriaUtil {
                     CriteriaDefinition criteriaDefinition = criteria.get(k);
                     java.lang.reflect.Field keyField = criteriaDefinition.getClass().getDeclaredField("key");
                     keyField.setAccessible(true);
-                    keyField.set(criteriaDefinition, CURRENT_VALUE + "." + keyField.get(criteriaDefinition));
-                    criteria.put(CURRENT_VALUE + "." + k, criteriaDefinition);
+                    keyField.set(criteriaDefinition, CURRENT + "." + keyField.get(criteriaDefinition));
+                    criteria.put(CURRENT + "." + k, criteriaDefinition);
                     criteria.remove(k);
                     criteriaField.set(finalQuery, criteria);
                 } catch (IllegalAccessException e) {
@@ -64,7 +64,7 @@ public class CriteriaUtil {
                     Map.Entry<String, Integer> e = it.next();
                     String k = e.getKey();
                     if (!k.equals(ID)) {
-                        criteria.put(CURRENT_VALUE + "." + k, e.getValue());
+                        criteria.put(CURRENT + "." + k, e.getValue());
                         criteria.remove(k);
                     }
                 }
@@ -77,7 +77,7 @@ public class CriteriaUtil {
                     Map.Entry<String, Object> e = it.next();
                     String k = e.getKey();
                     if (!k.equals(ID)) {
-                        slices.put(CURRENT_VALUE + "." + k, e.getValue());
+                        slices.put(CURRENT + "." + k, e.getValue());
                         slices.remove(k);
                     }
                 }
@@ -94,7 +94,7 @@ public class CriteriaUtil {
                     String k = e.getKey();
                     Criteria v= e.getValue();
                     if (!k.equals(ID)) {
-                        elemMatchs.put(CURRENT_VALUE + "." + k, v);
+                        elemMatchs.put(CURRENT + "." + k, v);
                         elemMatchs.remove(k);
                     }
                 }
@@ -103,7 +103,7 @@ public class CriteriaUtil {
                 positionKeyField.setAccessible(true);
                 String positionKey = (String) positionKeyField.get(fieldSpec);
                 if (null != positionKey) {
-                    positionKeyField.set(fieldSpec, CURRENT_VALUE + "." + positionKey);
+                    positionKeyField.set(fieldSpec, CURRENT + "." + positionKey);
                 }
 
                 fieldSpec.include(ID);
@@ -133,7 +133,7 @@ public class CriteriaUtil {
                 if (!order.getProperty().equals(ID)) {
                     java.lang.reflect.Field propertyField = order.getClass().getDeclaredField("property");
                     propertyField.setAccessible(true);
-                    propertyField.set(order, CURRENT_VALUE + "." + order.getProperty());
+                    propertyField.set(order, CURRENT + "." + order.getProperty());
                 }
             }
             ordersField.set(sort, orders);
