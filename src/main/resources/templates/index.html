@@ -13,7 +13,7 @@
 $(function() {
     try {
         $('#datetimepicker').datetimepicker({
-            format:"Y-m-d'T'H:i:s'Z'"
+            // format:"Y-m-d'T'H:i:s'Z'"
         });
         console.log([[${result}]]);
         $('#parsedJSON').jsonViewer(JSON.parse([[${result}]]), {collapsed: false, withQuotes: false});
@@ -22,7 +22,16 @@ $(function() {
     }
 
     $("#searchById").click(function() {
-        var url = "http://localhost:8080/api/findById?id=" + $("#id").val();
+        var date = $("#datetimepicker").val();
+        var url = "http://localhost:8080/api/findById?id=" + $("#id").val().trim() + (date == "" ? "" : "&date=" + date);
+        $.get(url, function (data, status) {
+            $('#parsedJSON').jsonViewer(JSON.parse(data), {collapsed: false, withQuotes: false});
+        });
+    });
+
+    $("#searchByQuery").click(function() {
+        var date = $("#datetimepicker").val();
+        var url = "http://localhost:8080/api/findByQuery?queryJson=" + encodeURI($("#json").val().trim()) + (date == "" ? "" : "&date=" + date);
         $.get(url, function (data, status) {
             $('#parsedJSON').jsonViewer(JSON.parse(data), {collapsed: false, withQuotes: false});
         });
@@ -73,13 +82,11 @@ $(function() {
                 <div style="float: left; margin-bottom: 5px;"><input id="create" type="button" value="Create" style="float: right" /></div>
                 <div style="float: left; margin-bottom: 5px;"><input id="update" type="button" value="Update" style="float: right" /></div>
                 <div style="float: left; margin-bottom: 5px;"><input id="searchByQuery" type="button" value="Search By Query" style="float: right" /></div>
-                <div style="float: left; margin-bottom: 5px;"><input id="searchByIdAndDate" type="button" value="Search By Id And Date" style="float: right" /></div>
-                <div style="float: left; margin-bottom: 5px;"><input id="searchByQueryAndDate" type="button" value="Search By Query And Date" style="float: right" /></div>
             </div>
         </div>
     </div>
     <div style="float: left; margin-left: 90px;">
-        <input id="datetimepicker" type="text" placeholder="Date Time" />
+        <input id="datetimepicker" type="text" placeholder="DateTime" />
     </div>
     <div id="parsedJSON" style="float: left; margin-left: 400px;">
 

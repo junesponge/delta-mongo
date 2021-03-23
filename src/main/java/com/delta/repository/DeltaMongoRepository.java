@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.delta.util.Constants.*;
@@ -141,17 +142,18 @@ public class DeltaMongoRepository {
         JSONArray rawDataByQuery = this.findRawDataByQuery(query);
         return new JSONArray(rawDataByQuery.stream().map(o -> {
             Map m = (Map) o;
-            Map tmpMap = new LinkedHashMap((Map) m.get(CURRENT_VALUE));
-            m.remove(CURRENT_VALUE);
-            m.putAll(tmpMap);
-            m.put(ID, m.get(ID).toString());
-            return m;
+            Map newMap = new LinkedHashMap();
+            newMap.put(ID, m.get(ID).toString());
+            newMap.putAll((Map) m.get(CURRENT_VALUE));
+            return newMap;
         }).collect(Collectors.toList()));
     }
 
     public JSONArray findByQueryAndDate(Query query, Date date) {
         JSONArray rawData = this.findRawDataByQuery(query);
-        return new JSONArray(rawData.stream().map(o -> this.findByDate((JSONObject) o, date)).collect(Collectors.toList()));
+        JSONArray jsonArray = new JSONArray(rawData.stream().map(o -> this.findByDate(new JSONObject((Map) o), date)).collect(Collectors.toList()));
+        jsonArray.removeIf(Predicate.isEqual(null));
+        return jsonArray;
     }
 
     private JSONArray findRawDataByQuery(Query query) {
@@ -184,7 +186,7 @@ public class DeltaMongoRepository {
                 || (rawData.size() == 1
                 && date.getTime() < DateTimeUtil.parseStringDate(String.valueOf(((Map) entry.getValue()).get(EDITED_TIME))).getTime()));
         if (hasNotCreated) {
-            return new JSONObject();
+            return null;
         }
 
         DataMap targetValue = null;
