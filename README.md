@@ -3,6 +3,42 @@
 **Introduction**  
 * This is a Java MongoDB repository framework project which can support restore the data image by timestamp.
 
+**Usage**  
+* Reference the DeltaMongoRepository in your Service class, then `@Autowired` it and specify the `@Collection` which you need to operate the data in MongoDB.
+
+      @Component
+      public class UserService {
+
+          @Autowired
+          @Collection("test") // The MongoDB collection name
+          DeltaMongoRepository deltaMongoRepository;
+
+          public void userFunction() {
+          
+              // Data need to be inserted.
+              this.deltaMongoRepository.insert(<JSONObject> data);
+              
+              // Date need to be updated (The "_id" is required).
+              this.deltaMongoRepository.update(<JSONObject> data);
+              
+              // Find all of the records of current image.
+              this.deltaMongoRepository.findAll();
+              
+              // Find the current image of specify record by "_id".
+              this.deltaMongoRepository.findById(<String> id);
+              
+              // Find the past image of specify record by "_id" and timestamp.
+              this.deltaMongoRepository.findByIdAndDate(<String> id, <Date> date);
+              
+              // Find the current image of specify record by query script.
+              this.deltaMongoRepository.findByQuery(<Query> query);
+              
+              // Find the past image of specify record by query script and timestamp.
+              this.deltaMongoRepository.findByQueryAndDate(<Query> query, <Date> date);            
+          }
+      }
+    
+
 **Example**  
 * Operate data via DeltaMongo repository interface  
 2020/1/1T10:00:00Z insert - {"a" : "a", "b" : "b"} -> Data ID "abc123" generated  
