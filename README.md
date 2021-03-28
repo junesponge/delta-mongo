@@ -1,11 +1,9 @@
 # DeltaMongo
 
 **Introduction**  
-
 * This is a Java MongoDB repository framework project which can support restore the data image by timestamp.
 
 **Example**  
-
 * Operate data via DeltaMongo repository interface  
 2020/1/1T10:00:00Z insert - {"a" : "a", "b" : "b"} -> Data ID "abc123" generated  
 2020/1/2T10:00:00Z update - {"_id":"abc123", "a" : "a"} -> Remove the element "b" out of the data  
@@ -17,7 +15,6 @@ Criteria -> {"_id" : "abc123", "date" : "2020/1/2T12:00:00Z"} - Result -> {"_id"
 Criteria -> {"_id" : "abc123", "date" : "2020/1/1T12:00:00Z"} - Result -> {"_id":"abc123", "a" : "a", "b" : "b"}  
 
 **Schema**  
-
 * The actual data structure store in the MongoDB  
 {  
  "_id" : "abc123",  
@@ -49,5 +46,4 @@ Criteria -> {"_id" : "abc123", "date" : "2020/1/1T12:00:00Z"} - Result -> {"_id"
 }
 
 **Thought of Design**  
-
 * This framework will according the input parameter "date" as key to locate the delta element within the record, once the target "date" element is located, then the program will patch the history delta data from "current" element to the target "date" element by the edited time between of them descendingly.
