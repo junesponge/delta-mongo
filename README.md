@@ -2,7 +2,7 @@
 
 **Introduction**  
 
-This is a Java MongoDB repository framework project which can support restore the data image by timestamp.
+* This is a Java MongoDB repository framework project which can support restore the data image by timestamp.
 
 **Example**  
 
@@ -18,7 +18,7 @@ Criteria -> {"_id" : "abc123", "date" : "2020/1/1T12:00:00Z"} - Result -> {"_id"
 
 **Schema**  
 
-* The actual data structure in the MongoDB  
+* The actual data structure store in the MongoDB  
 {  
  "_id" : "abc123",  
  "current" : {  
@@ -50,4 +50,4 @@ Criteria -> {"_id" : "abc123", "date" : "2020/1/1T12:00:00Z"} - Result -> {"_id"
 
 **Thought of Design**  
 
-This framework will according the input parameter "date" as key to locate the delta element within the record, once the target "date" element is located, then the program will patch the history delta data from "current" element to the target "date" element by the edited time between of them descendingly.
+* This framework will according the input parameter "date" as key to locate the delta element within the record, once the target "date" element is located, then the program will patch the history delta data from "current" element to the target "date" element by the edited time between of them descendingly.
