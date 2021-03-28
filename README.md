@@ -54,13 +54,13 @@
 * Search data via DeltaMongo repository interface  
 
     Criteria -> `{"_id" : "abc123"}`  
-    Result -> `{"_id":"abc123", "a" : "a", "b" : "b", "c" : "c"}` 
+    Result -> `{"_id":"abc123", "a" : "a", "b" : "b", "c" : "c", "editedTime" : "2020/01/03T10:00:00Z"}` 
      
     Criteria -> `{"_id" : "abc123", "date" : "2020/01/02T12:00:00Z"}`  
-    Result -> `{"_id":"abc123", "a" : "a"}`  
+    Result -> `{"_id":"abc123", "a" : "a", "editedTime" : "2020/01/02T10:00:00Z"}`  
     
     Criteria -> `{"_id" : "abc123", "date" : "2020/01/01T12:00:00Z"}`  
-    Result -> `{"_id":"abc123", "a" : "a", "b" : "b"}`  
+    Result -> `{"_id":"abc123", "a" : "a", "b" : "b", "editedTime" : "2020/01/01T10:00:00Z"}`  
 
 **Schema**  
 * The actual data structure store in the MongoDB  
