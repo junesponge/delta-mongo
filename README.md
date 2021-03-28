@@ -41,9 +41,15 @@
 
 **Example**  
 * Operate data via DeltaMongo repository interface  
-2020/1/1T10:00:00Z insert - {"a" : "a", "b" : "b"} -> Data ID "abc123" generated  
-2020/1/2T10:00:00Z update - {"_id":"abc123", "a" : "a"} -> Remove the element "b" out of the data  
-2020/1/3T10:00:00Z update - {"_id":"abc123", "a" : "a", "b" : "b", "c" : "c"} -> Add the element "b" and "c" into the data  
+
+    2020/1/1T10:00:00Z insert - `{"a" : "a", "b" : "b"}`  
+    -> Data ID "abc123" generated  
+    
+    2020/1/2T10:00:00Z update - `{"_id":"abc123", "a" : "a"}`  
+    -> Remove the element "b" out of the data  
+    
+    2020/1/3T10:00:00Z update - `{"_id":"abc123", "a" : "a", "b" : "b", "c" : "c"}`  
+    -> Add the element "b" and "c" into the data  
 
 * Search data via DeltaMongo repository interface  
 
