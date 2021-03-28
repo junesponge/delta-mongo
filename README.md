@@ -47,3 +47,4 @@ Criteria -> {"_id" : "abc123", "date" : "2020/1/1T12:00:00Z"} - Result -> {"_id"
 
 **Thought of Design**  
 * This framework will according the input parameter "date" as key to locate the delta element within the record, once the target "date" element is located, then the program will patch the history delta data from "current" element to the target "date" element by the edited time between of them descendingly.
+* Advantage - Due to the record just stored the delta data for each time of change, it will not occupy much disk space when just had few changes within the large record.
